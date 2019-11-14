@@ -1,7 +1,7 @@
 class Api::V1::DrawingsController < ApplicationController
     def index
         @drawers = Drawing.all 
-        render json: @drawers, only: [:id, :name, :data, :user_id]
+        render json: @drawers, only: [:id, :name, :data, :user_id], include: [:user]
     end
     
     def new

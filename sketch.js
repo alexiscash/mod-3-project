@@ -1,20 +1,25 @@
 let video;
-let poseNet;
 let poses = [];
 let button;
 let current;
 let path;
+let userId;
+let display = true;
 
 function setup() {
-  getDrawings().then( res => {
-      console.log(res);
-      current = res[res.length - 1].id;
-  });
   createCanvas(640, 480);
+  getDrawings().then( res => {
+    //   console.log(res);
+      current = res[res.length - 1].id;
+      userId = res[res.length - 1].user.id;
+  });
   video = createCapture(VIDEO);
   video.hide();
-  poseNet = ml5.poseNet(video, modelReady);
-  poseNet.on('pose', function(results) {
+  const options = {flipHorizontal: true};
+  const poseNet = ml5.poseNet(video, options, modelReady);
+//   const poseNet = ml5.poseNet(video, modelReady);
+  poseNet.on('pose', results => {
+    // console.log(results);
     poses = results;
   });
 }
@@ -24,10 +29,31 @@ function modelReady() {
 }
 
 function draw() {
+//   if (display) {
+//     background(51);
+//     push();
+//     translate(width,0);
+//     scale(-1, 1);
+//     image(video, 0, 0, width, height);
+//     pop();
+//   //   image(video, 0, 0, 640, 480);
+//     drawKeypoints();
+//     drawSkeleton();
+//   } else {
+//       background(51);
+//   }
+
   background(51);
-  image(video, 0, 0, 640, 480);
+  if (display) {
+    push();
+    translate(width,0);
+    scale(-1,1);
+    image(video, 0,0, width, height);
+    pop();
+  }
   drawKeypoints();
   drawSkeleton();
+  
 }
 
 function drawKeypoints()  {
@@ -35,7 +61,7 @@ function drawKeypoints()  {
     let pose = poses[i].pose;
     for (let j = 0; j < pose.keypoints.length; j++) {
       let keypoint = pose.keypoints[j];
-      if (keypoint.score > 0.2) {
+      if (keypoint.score > 0.3) {
         fill(52, 219, 235);
         noStroke();
         ellipse(keypoint.position.x, keypoint.position.y, 10, 10);
@@ -57,12 +83,14 @@ function drawSkeleton() {
 }
 
 function capturePose() {
-    let canvas = document.querySelector('canvas')
-    let image = document.createElement('img')
-    document.body.append(image)
-    let url = canvas.toDataURL()
-    image.src = url
-    image.width = width
+    const canvas = document.querySelector('canvas');
+    const image = document.createElement('img');
+    const br = document.createElement('br');
+    document.body.append(br, image);
+    const data = canvas.toDataURL();
+    // console.log(url);
+    image.src = data;
+    image.width = width;
 }
 
 function keyPressed() {
@@ -74,6 +102,10 @@ function keyPressed() {
     } else if (keyCode == 70) {
         let fs = fullscreen();
         fullscreen(!fs);
+    } else if (keyCode == 86) {
+        display = !display;
+    } else if (keyCode == 89) {
+        findAverageScore();
     } else {
         console.log(keyCode);
     }
@@ -98,13 +130,13 @@ function postImage() {
         body: JSON.stringify({
             name: `${path}`,
             data: `/Users/flatironstudent/Downloads/${path}.png`,
-            user_id: 5
+            user_id: userId
         })
     })
     .then( res => res.json())
     .then( json => {
         console.log(json);
-        path = `posenet${json.id}`
+        path = `posenet${current}`
         // displayPose(img, body, br);
         saveCanvas(path)
         setTimeout( () => {
@@ -132,5 +164,13 @@ async function displayPose(img, body, br) {
     img.src = `/Users/flatironstudent/Downloads/${path}.png`;
     img.width = 640;
     body.append(br, img);
+}
+
+function findAverageScore() {
+    let keypoints = poses[0].pose.keypoints;
+    for (i of keypoints) {
+        console.log(i.position.x);
+        console.log(i.position.y);
+    }
 }
 
