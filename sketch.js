@@ -43,7 +43,7 @@ function draw() {
 //       background(51);
 //   }
 
-  background(51);
+  background(235, 130, 130);
   if (display) {
     push();
     translate(width,0);
