@@ -11,5 +11,5 @@ Drawing.destroy_all
 
 user = User.create(name: 'swag boi')
 
-drawing = Drawing.create(name: 'cat', data: 'ayyy lmao', user_id: user.id)
+drawing = Drawing.create(name: 'cat', data: 'https://pixel.nymag.com/imgs/daily/vulture/2019/04/04/04-lil-nas-x.w700.h700.jpg', user_id: user.id, xaverage: 400, yaverage: 300)
 
