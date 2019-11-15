@@ -16,6 +16,8 @@ ActiveRecord::Schema.define(version: 2019_11_11_192123) do
     t.string "name"
     t.text "data"
     t.integer "user_id"
+    t.float "xaverage"
+    t.float "yaverage"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
   end

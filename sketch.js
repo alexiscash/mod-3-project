@@ -5,6 +5,7 @@ let current;
 let path;
 let userId;
 let display = true;
+let lastScores = [];
 
 function setup() {
   createCanvas(640, 480);
@@ -29,20 +30,6 @@ function modelReady() {
 }
 
 function draw() {
-//   if (display) {
-//     background(51);
-//     push();
-//     translate(width,0);
-//     scale(-1, 1);
-//     image(video, 0, 0, width, height);
-//     pop();
-//   //   image(video, 0, 0, 640, 480);
-//     drawKeypoints();
-//     drawSkeleton();
-//   } else {
-//       background(51);
-//   }
-
   background(51);
   if (display) {
     push();
@@ -61,7 +48,7 @@ function drawKeypoints()  {
     let pose = poses[i].pose;
     for (let j = 0; j < pose.keypoints.length; j++) {
       let keypoint = pose.keypoints[j];
-      if (keypoint.score > 0.3) {
+      if (keypoint.score > 0.2) {
         fill(52, 219, 235);
         noStroke();
         ellipse(keypoint.position.x, keypoint.position.y, 10, 10);
@@ -83,31 +70,74 @@ function drawSkeleton() {
 }
 
 function capturePose() {
-    const canvas = document.querySelector('canvas');
-    const image = document.createElement('img');
-    const br = document.createElement('br');
-    document.body.append(br, image);
-    const data = canvas.toDataURL();
-    // console.log(url);
-    image.src = data;
-    image.width = width;
+    setTimeout(() => {
+        const canvas = document.querySelector('canvas');
+        const image = document.createElement('img');
+        const p = document.createElement('p');
+        const br = document.createElement('br');
+        let name = `posenet${++current}`
+        document.body.append(br, p, image);
+        const data = canvas.toDataURL();
+        arr = findAverageScore();
+        // console.log(url);
+        if (lastScores != []) {
+            console.log(arr, lastScores);
+        }
+        image.src = data;
+        image.width = width;
+        fetch('http://localhost:3000/api/v1/drawings', {
+            method: "POST",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                name: name,
+                data: data,
+                user_id: userId,
+                xaverage: arr[0],
+                yaverage: arr[1]
+            })
+        }).then(res => res.json())
+        .then(console.log);
+    }, 5000);
 }
 
 function keyPressed() {
-    if (keyCode == 32) {
-        capturePose();
-    } else if (keyCode == ENTER) {
-        // printCurrent();
-        postImage();
-    } else if (keyCode == 70) {
-        let fs = fullscreen();
-        fullscreen(!fs);
-    } else if (keyCode == 86) {
-        display = !display;
-    } else if (keyCode == 89) {
-        findAverageScore();
-    } else {
-        console.log(keyCode);
+    switch(keyCode) {
+        // space
+        case 32:
+            // save canvas encoded in base64 and send to db
+            capturePose();
+            break;
+        case ENTER:
+            // deprecated. don't use
+            postImage();
+            break;
+        // f to pay respects
+        case 70:
+            // double tap to make window fullscreen
+            let fs = fullscreen();
+            fullscreen(!fs);
+            break;
+        // v
+        case 68:
+            // hide the video 
+            display = !display;
+            break;
+        // y
+        case 89:
+            // get the rough approximation of someone's pose
+            findAverageScore();
+            break;
+        // m
+        case 77:
+            // get all drawings from db and render them
+            renderDrawings();
+            break;
+        default:
+            // for debugging
+            console.log(keyCode);
     }
 }
 
@@ -168,9 +198,34 @@ async function displayPose(img, body, br) {
 
 function findAverageScore() {
     let keypoints = poses[0].pose.keypoints;
+    // console.log(keypoints);
+    let xTotal = 0;
+    let yTotal = 0;
+    let len = 0;
     for (i of keypoints) {
-        console.log(i.position.x);
-        console.log(i.position.y);
+        if (i.score > 0.3) {
+            xTotal += i.position.x;
+            yTotal += i.position.y;
+            len++
+        } 
     }
+    let arr = []
+    arr.push(xTotal/len);
+    arr.push(yTotal/len);
+    // console.log(xTotal / len);
+    // console.log(yTotal / len);
+    // console.log(arr);
+    return arr;
 }
 
+function renderDrawings() {
+    getDrawings().then(drawings => {
+        for (i of drawings) {
+            const img = document.createElement('img');
+            img.width = width
+            img.src = i.data;
+            const br = document.createElement('br');
+            document.body.append(br, img);
+        }
+    });
+}

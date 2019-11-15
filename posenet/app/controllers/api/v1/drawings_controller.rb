@@ -33,6 +33,6 @@ class Api::V1::DrawingsController < ApplicationController
     private
 
     def prams
-        params.require(:drawing).permit(:name, :data, :user_id)
+        params.require(:drawing).permit(:name, :data, :user_id, :xaverage, :yaverage)
     end
 end
