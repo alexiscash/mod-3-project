@@ -13,8 +13,12 @@ body {
 p {
     font-family:courier;
     font-size:30px;
-    margin: 30px; right
+    margin: 25px right
     /* left: 10px;  */
+}
+
+img {
+    margin: 10em;
 }
 
 /* .container{
